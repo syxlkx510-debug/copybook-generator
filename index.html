@@ -7,14 +7,23 @@
     <title>字帖生成器 - 自定义汉字练习字帖</title>
     <meta name="description" content="免费在线字帖生成器，支持自定义汉字、拼音，米字格练习，可导出PDF打印">
 
-    <!-- 本地字体定义 (如有本地安装则使用) -->
+    <!-- 字体定义 - 支持本地和网络加载 -->
     <style>
+        /* 霞鹜文楷 - 先尝试本地，再从CDN加载 */
         @font-face {
             font-family: 'LXGW WenKai GB';
             src: local('LXGW WenKai GB'),
-                local('LXGWWenKaiGB-Regular');
+                local('LXGWWenKaiGB-Regular'),
+                url('https://cdn.jsdelivr.net/npm/lxgw-wenkai-gb-webfont@1.0.0/lxgwwenkaigb-regular.woff2') format('woff2');
             font-weight: normal;
             font-style: normal;
+            font-display: swap;
+        }
+
+        /* 楷体备用 - 系统字体回退 */
+        @font-face {
+            font-family: 'KaiTi-Fallback';
+            src: local('KaiTi'), local('楷体'), local('STKaiti'), local('Kaiti SC');
             font-display: swap;
         }
     </style>
