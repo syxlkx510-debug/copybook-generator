@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字帖生成器 - 自定义汉字练习字帖</title>
+    <meta name="description" content="免费在线字帖生成器，支持自定义汉字、拼音，米字格练习，可导出PDF打印">
+
+    <!-- 本地字体定义 (如有本地安装则使用) -->
+    <style>
+        @font-face {
+            font-family: 'LXGW WenKai GB';
+            src: local('LXGW WenKai GB'),
+                local('LXGWWenKaiGB-Regular');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+    </style>
+
+    <!-- Pinyin Pro -->
+    <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.18.2/dist/index.js"></script>
+
+    <!-- html2canvas & jsPDF for PDF export -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+    <!-- Hanzi Writer for stroke order -->
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+
+    <link rel="stylesheet" href="style.css?v=70">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- 左侧控制面板 -->
+        <aside class="control-panel">
+            <div class="panel-header">
+                <h1>✏️ 字帖生成器</h1>
+                <p class="subtitle">自定义汉字练习字帖</p>
+            </div>
+
+            <div class="panel-content">
+                <!-- 预置内容 -->
+                <div class="control-section">
+                    <label class="section-title">📚 预置内容</label>
+                    <div class="preset-row">
+                        <select id="presetCategory">
+                            <option value="">选择分类...</option>
+                            <option value="grade1">一年级常用字</option>
+                            <option value="grade2">二年级常用字</option>
+                            <option value="grade3">三年级常用字</option>
+                            <option value="poems">经典古诗</option>
+                            <option value="poems2">必背古诗（按年级）</option>
+                            <option value="vocabulary">词语练习</option>
+                            <option value="radicals">偏旁部首</option>
+                            <option value="daily">日常词汇</option>
+                            <option value="pinyin">拼音专项</option>
+                            <option value="idioms">常用成语</option>
+                            <option value="strokes">笔顺练习</option>
+                        </select>
+                    </div>
+                    <div class="preset-row">
+                        <select id="presetContent" disabled>
+                            <option value="">请先选择分类...</option>
+                        </select>
+                        <button id="replacePreset" class="insert-btn replace-btn" disabled>替换</button>
+                        <button id="appendPreset" class="insert-btn append-btn" disabled>追加</button>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <label class="section-title">📝 输入文字</label>
+                    <textarea id="textInput" placeholder="直接输入文章或汉字&#10;支持标点符号、空格等，均会作为独立格子显示"></textarea>
+                    <div class="input-hint">汉字自动标注拼音，标点和空格作为占位格</div>
+                </div>
+
+                <!-- 描红模式 -->
+                <div class="control-section">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="traceMode">
+                        <span class="checkmark"></span>
+                        ✍️ 描红模式
+                    </label>
+                    <div class="trace-options" id="traceOptions" style="display: none;">
+                        <span class="trace-label">每字重复：</span>
+                        <select id="traceCount">
+                            <option value="2">2次</option>
+                            <option value="3">3次</option>
+                            <option value="4" selected>4次</option>
+                            <option value="5">5次</option>
+                            <option value="6">6次</option>
+                        </select>
+                        <span class="trace-hint">（首格正常，后续浅色描红）</span>
+                    </div>
+                </div>
+
+                <!-- 打卡模式 -->
+                <div class="control-section checkin-section">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="checkInMode">
+                        <span class="checkmark"></span>
+                        📋 每日打卡模式
+                    </label>
+                    <div class="checkin-options" id="checkInOptions" style="display: none;">
+                        <div class="checkin-row">
+                            <span class="checkin-label">区域数量：</span>
+                            <div class="region-buttons">
+                                <button class="region-btn" data-regions="4">4区</button>
+                                <button class="region-btn active" data-regions="6">6区</button>
+                                <button class="region-btn" data-regions="8">8区</button>
+                            </div>
+                        </div>
+                        <div class="checkin-row">
+                            <span class="checkin-label">起始课次：</span>
+                            <input type="number" id="checkInStartLesson" value="1" min="1" max="999"
+                                class="lesson-input">
+                        </div>
+                        <div class="checkin-contents" id="checkInContents">
+                            <!-- 区域内容输入将由JS动态生成 -->
+                        </div>
+                        <div class="checkin-hint">
+                            💡 每个区域输入几个汉字，自动生成1范字+3描红+空白格
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 笔顺模式 -->
+                <div class="control-section">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="strokeMode">
+                        <span class="checkmark"></span>
+                        🖌️ 笔顺模式
+                    </label>
+                    <div class="stroke-hint" id="strokeHint" style="display: none;">
+                        <span>（按笔画数拆分显示，拼音区显示笔画序号）</span>
+                    </div>
+                </div>
+
+                <!-- 布局调整 -->
+                <div class="control-section">
+                    <label class="section-title">📐 布局调整</label>
+                    <div class="layout-controls">
+                        <div class="layout-row">
+                            <span class="layout-label">每行字数</span>
+                            <div class="layout-options">
+                                <button class="layout-btn" data-cols="8">8</button>
+                                <button class="layout-btn active" data-cols="10">10</button>
+                                <button class="layout-btn" data-cols="12">12</button>
+                                <button class="layout-btn" data-cols="14">14</button>
+                                <button class="layout-btn" data-cols="16">16</button>
+                            </div>
+                        </div>
+                        <div class="layout-row">
+                            <span class="layout-label">格子大小</span>
+                            <div class="layout-options">
+                                <button class="layout-btn" data-size="12">12mm<br><small>5-6年级</small></button>
+                                <button class="layout-btn" data-size="16">16mm<br><small>3-4年级</small></button>
+                                <button class="layout-btn active" data-size="18">18mm<br><small>2年级</small></button>
+                                <button class="layout-btn" data-size="20">20mm<br><small>1年级</small></button>
+                            </div>
+                        </div>
+                        <div class="layout-row">
+                            <label class="checkbox-label compact">
+                                <input type="checkbox" id="showPinyin" checked>
+                                <span class="checkmark"></span>
+                                显示拼音格
+                            </label>
+                        </div>
+                    </div>
+                    <div class="layout-hint">行数根据格子大小自动计算</div>
+                </div>
+
+                <!-- 字符设置 -->
+                <div class="control-section">
+                    <label class="section-title">🔤 字符模式</label>
+                    <div class="batch-mode-buttons">
+                        <button id="setAllNormal" class="batch-btn">全部正常</button>
+                        <button id="setAllCharOnly" class="batch-btn">全部仅汉字</button>
+                        <button id="setAllPinyinOnly" class="batch-btn">全部仅拼音</button>
+                    </div>
+                    <div class="char-hint">点击预览区字符可单独切换模式</div>
+                </div>
+
+                <!-- 字体选择 -->
+                <div class="control-section">
+                    <label class="section-title">🔤 字体设置</label>
+                    <div class="font-select-row">
+                        <select id="fontSelect">
+                            <option value="LXGW WenKai GB">霞鹜文楷 GB (默认)</option>
+                            <option value="KaiTi">楷体</option>
+                            <option value="SimSun">宋体</option>
+                            <option value="SimHei">黑体</option>
+                            <option value="FangSong">仿宋</option>
+                        </select>
+                    </div>
+                    <div class="font-actions">
+                        <label class="font-upload-btn">
+                            📁 上传字体
+                            <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" hidden>
+                        </label>
+                        <button id="detectLocalFonts" class="font-detect-btn">🔍 检测本机字体</button>
+                    </div>
+                    <div class="font-download-hint">
+                        <a href="javascript:void(0)" id="openFontDownloadModal">
+                            💾 下载霞鹜文楷字体
+                        </a>
+                    </div>
+                    <div class="font-disclaimer">
+                        ⚠️ 默认字体「霞鹜文楷 GB」可免费商用。如使用其他字体，请自行确认版权，与本应用作者无关。
+                    </div>
+                </div>
+
+                <!-- 格子类型 -->
+                <div class="control-section">
+                    <label class="section-title">📏 格子类型</label>
+                    <div class="grid-type-buttons">
+                        <button id="gridTypeMi" class="grid-type-btn active" data-type="mi">米字格</button>
+                        <button id="gridTypeTian" class="grid-type-btn" data-type="tian">田字格</button>
+                        <button id="gridTypeKou" class="grid-type-btn" data-type="kou">口字格</button>
+                    </div>
+                </div>
+
+                <!-- 边框颜色 -->
+                <div class="control-section">
+                    <label class="section-title">🎨 边框颜色</label>
+                    <div class="color-picker-row">
+                        <input type="color" id="borderColor" value="#cccccc">
+                        <span id="colorValue">#cccccc</span>
+                    </div>
+                    <div class="color-presets">
+                        <button class="color-preset" data-color="#cccccc" style="background:#cccccc"></button>
+                        <button class="color-preset" data-color="#a8d8a8" style="background:#a8d8a8"></button>
+                        <button class="color-preset" data-color="#a8c8e8" style="background:#a8c8e8"></button>
+                        <button class="color-preset" data-color="#e8c8a8" style="background:#e8c8a8"></button>
+                        <button class="color-preset" data-color="#d8a8d8" style="background:#d8a8d8"></button>
+                    </div>
+                </div>
+
+                <!-- 字符大小调节 -->
+                <div class="control-section">
+                    <label class="section-title">📐 字符大小</label>
+                    <div class="size-slider-row">
+                        <input type="range" id="charSizeSlider" min="50" max="150" value="100" step="5">
+                        <span id="charSizeValue">100%</span>
+                        <button id="applySizeBtn" class="apply-btn">应用</button>
+                    </div>
+                    <div class="size-hint">调整后点击"应用"按钮生效</div>
+                </div>
+
+                <!-- 字符灰度 -->
+                <div class="control-section">
+                    <label class="section-title">🎨 字符灰度（描红练习）</label>
+                    <div class="opacity-presets">
+                        <button class="opacity-btn active" data-opacity="100">深色</button>
+                        <button class="opacity-btn" data-opacity="50">中等</button>
+                        <button class="opacity-btn" data-opacity="20">浅色</button>
+                    </div>
+                    <div class="opacity-slider-row">
+                        <input type="range" id="charOpacitySlider" min="0" max="100" value="100" step="5">
+                        <span id="charOpacityValue">100%</span>
+                        <button id="applyOpacityBtn" class="apply-btn">应用</button>
+                    </div>
+                </div>
+
+                <!-- 标题设置 -->
+                <div class="control-section">
+                    <label class="section-title">📌 标题</label>
+                    <input type="text" id="titleInput" placeholder="字帖" value="汉字练习">
+                </div>
+
+                <!-- 学生信息栏 -->
+                <div class="control-section">
+                    <label class="section-title">👤 学生信息栏</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showName" checked>
+                            <span class="checkmark"></span>
+                            姓名
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showClass">
+                            <span class="checkmark"></span>
+                            班级
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showDate" checked>
+                            <span class="checkmark"></span>
+                            日期
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 评分区 -->
+                <div class="control-section">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="showRating">
+                        <span class="checkmark"></span>
+                        ⭐ 显示评分区
+                    </label>
+                </div>
+
+                <!-- 结束语设置 -->
+                <div class="control-section">
+                    <label class="section-title">📎 结束语</label>
+                    <input type="text" id="endingInput" placeholder="可留空" value="加油！每天进步一点点">
+                </div>
+
+                <!-- 保存设置 -->
+                <div class="control-section">
+                    <label class="section-title">💾 保存设置</label>
+                    <div class="save-buttons">
+                        <button id="saveSettings" class="save-btn">保存当前设置</button>
+                        <button id="clearSettings" class="clear-btn">清除保存</button>
+                    </div>
+                    <div class="save-hint" id="saveHint"></div>
+                </div>
+
+                <!-- 导出按钮 -->
+                <div class="control-section export-section">
+                    <div class="export-buttons">
+                        <button id="exportPdf" class="export-btn">
+                            <span class="btn-icon">📄</span>
+                            导出 PDF
+                        </button>
+                        <button id="exportPng" class="export-btn export-png">
+                            <span class="btn-icon">🖼️</span>
+                            导出图片
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 版权声明 -->
+                <div class="control-section copyright-section">
+                    <div class="copyright-text">
+                        <p>笔顺数据来源：<a href="https://hanziwriter.org" target="_blank">Hanzi Writer</a> (MIT License)</p>
+                        <p>字形数据来源：Make Me A Hanzi / <a href="https://www.arphic.com.tw" target="_blank">Arphic
+                                Technology</a></p>
+                        <p>© 2024 汉字字帖生成器</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 右侧预览区 -->
+        <main class="preview-area">
+            <div class="preview-header">
+                <span>📋 打印预览 (A4)</span>
+                <span id="fontStatus" class="font-status"></span>
+            </div>
+            <div class="preview-scroll">
+                <!-- 多页容器 - 页面将动态生成 -->
+                <div id="pagesContainer" class="pages-container"></div>
+            </div>
+        </main>
+    </div>
+    <!-- 字体下载弹窗 -->
+    <div id="fontDownloadModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💾 下载霞鹜文楷 GB 字体</h3>
+                <button class="modal-close" id="closeFontModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-intro">霞鹜文楷 GB 是一款免费开源的楷体字体，适合字帖练习使用。请选择下载方式：</p>
+
+                <div class="download-option">
+                    <div class="option-header">
+                        <span class="option-icon">🌐</span>
+                        <span class="option-title">GitHub 官方下载</span>
+                    </div>
+                    <p class="option-desc">原版发布页面，可能因网络原因下载较慢</p>
+                    <a href="https://github.com/lxgw/LxgwWenKai/releases" target="_blank" rel="noopener"
+                        class="download-btn github-btn">
+                        前往 GitHub 下载
+                    </a>
+                </div>
+
+                <div class="download-option recommended">
+                    <div class="option-header">
+                        <span class="option-icon">📦</span>
+                        <span class="option-title">百度网盘下载</span>
+                        <span class="recommend-badge">推荐</span>
+                    </div>
+                    <p class="option-desc">作者上传的源文件，保证无毒，国内下载快速</p>
+                    <div class="baidu-download-info">
+                        <a href="https://pan.baidu.com/s/1U2jYia5S72Qwwzv0GcCDuw?pwd=2u7e" target="_blank"
+                            rel="noopener" class="download-btn baidu-btn">
+                            打开百度网盘
+                        </a>
+                        <span class="extract-code">提取码: <strong>2u7e</strong></span>
+                    </div>
+                    <div class="qrcode-section">
+                        <img src="font-qrcode.png" alt="百度网盘二维码" class="qrcode-img">
+                        <span class="qrcode-label">手机扫码下载</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=69"></script>
+</body>
+
+</html>

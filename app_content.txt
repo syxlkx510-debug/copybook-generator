@@ -1,0 +1,1485 @@
+﻿/**
+ * 瀛楀笘鐢熸垚鍣?- 鏍稿績閫昏緫
+ */
+
+// 瀛楃鏄剧ず妯″紡
+const DisplayMode = {
+    NORMAL: 'normal',           // 鏄剧ず鎷奸煶 + 姹夊瓧
+    CHAR_ONLY: 'char-only',     // 鍙樉绀烘眽瀛楋紝涓嶆樉绀烘嫾闊?
+    PINYIN_ONLY: 'pinyin-only', // 鍙樉绀烘嫾闊筹紝姹夊瓧绌虹櫧
+    HIDDEN: 'hidden'            // 閮戒笉鏄剧ず锛岀┖鐧芥牸瀛?
+};
+
+// 妯″紡鏄剧ず鍚嶇О
+const ModeLabels = {
+    [DisplayMode.NORMAL]: '姝ｅ父',
+    [DisplayMode.CHAR_ONLY]: '浠呮眽瀛?,
+    [DisplayMode.PINYIN_ONLY]: '浠呮嫾闊?,
+    [DisplayMode.HIDDEN]: '闅愯棌'
+};
+
+// 棰勭疆鍐呭鏁版嵁
+const PRESETS = {
+    grade1: {
+        name: '涓€骞寸骇甯哥敤瀛?,
+        items: [
+            { name: '绗竴缁勶紙浜哄彛鎵嬶級', content: '浜?鍙?鎵?澶?灏?涓?涓?宸?鍙?涓?澶?鍦?鏃?鏈?姘?鐏?灞?鐭?鐢?鍦? },
+            { name: '绗簩缁勶紙涓€浜屼笁锛?, content: '涓€ 浜?涓?鍥?浜?鍏?涓?鍏?涔?鍗?鐧?鍗?涓?涓?鍙?鍙?瀵?鍗?鍏? },
+            { name: '绗笁缁勶紙鎴戜綘浠栵級', content: '鎴?浣?浠?濂?瀹?浠?鐨?鏄?鍦?鏈?杩?閭?浠€ 涔?璋?鍝?閲?鎬?鏍? },
+            { name: '绗洓缁勶紙鐖稿瀹讹級', content: '鐖?鐖?濡?濡?鐖?鐖?濂?濂?鍝?鍝?濮?濮?寮?寮?濡?濡?瀹?浜?濂? },
+            { name: '鏁板瓧缁冧範', content: '闆?涓€ 浜?涓?鍥?浜?鍏?涓?鍏?涔?鍗?鐧?鍗?涓?浜? }
+        ]
+    },
+    grade2: {
+        name: '浜屽勾绾у父鐢ㄥ瓧',
+        items: [
+            { name: '绗竴缁勶紙鏄ュ绉嬪啲锛?, content: '鏄?澶?绉?鍐?椋?闆?闆?闇?浜?闆?闇?鍐?鏅?闃?鐑?鍐?鏆?鍑? },
+            { name: '绗簩缁勶紙鍔ㄧ墿锛?, content: '铏?璞?鐙?璞?鐚?楣?鐔?鍏?鐙?鐙?楦?楦?楣?鐚?鐗?缇?椹?鐙?鐚? },
+            { name: '绗笁缁勶紙妞嶇墿锛?, content: '鑺?鑽?鏍?鏈?鍙?鏍?鑼?鏋?鏋?鐡?鑿?璞?绫?楹?绂?鑻?鑺?绉?妞? },
+            { name: '绗洓缁勶紙棰滆壊锛?, content: '绾?姗?榛?缁?闈?钃?绱?榛?鐧?鐏?绮?閲?閾?褰?鑹?娣?娴?浜?鏆? }
+        ]
+    },
+    grade3: {
+        name: '涓夊勾绾у父鐢ㄥ瓧',
+        items: [
+            { name: '绗竴缁勶紙瀛︿範锛?, content: '瀛?涔?璇?鍐?绠?鎬?鑰?闂?绛?璇?鍚?鐪?缁?鑳?璁?蹇?鐞?瑙?鐭?璇? },
+            { name: '绗簩缁勶紙鍝佸痉锛?, content: '璇?淇?鍠?鑹?鍕?淇?鍕?鏁?璋?铏?绀?璨?灏?鏁?鍙?鐖?鍥?缁?浜?鍔? },
+            { name: '绗笁缁勶紙韬綋锛?, content: '澶?鍙?鐪?鑰?榧?鍙?鐗?鑸?闈?棰?鑲?鑷?鎵?鎸?鑵?鑵?鑴?瓒?蹇?鑲? }
+        ]
+    },
+    poems: {
+        name: '缁忓吀鍙よ瘲',
+        items: [
+            { name: '闈欏鎬?- 鏉庣櫧', content: '搴婂墠鏄庢湀鍏夛紝鐤戞槸鍦颁笂闇溿€俓n涓惧ご鏈涙槑鏈堬紝浣庡ご鎬濇晠涔°€? },
+            { name: '鏄ユ檽 - 瀛熸旦鐒?, content: '鏄ョ湢涓嶈鏅擄紝澶勫闂诲暭楦熴€俓n澶滄潵椋庨洦澹帮紝鑺辫惤鐭ュ灏戙€? },
+            { name: '鎮啘 - 鏉庣粎', content: '閿勭鏃ュ綋鍗堬紝姹楁淮绂句笅鍦熴€俓n璋佺煡鐩樹腑椁愶紝绮掔矑鐨嗚緵鑻︺€? },
+            { name: '鍜忛箙 - 楠嗗鐜?, content: '楣呴箙楣咃紝鏇查」鍚戝ぉ姝屻€俓n鐧芥瘺娴豢姘达紝绾㈡帉鎷ㄦ竻娉€? },
+            { name: '鐧婚钩闆€妤?- 鐜嬩箣娑?, content: '鐧芥棩渚濆北灏斤紝榛勬渤鍏ユ捣娴併€俓n娆茬┓鍗冮噷鐩紝鏇翠笂涓€灞傛ゼ銆? },
+            { name: '鏈涘簮灞辩€戝竷 - 鏉庣櫧', content: '鏃ョ収棣欑倝鐢熺传鐑燂紝閬ョ湅鐎戝竷鎸傚墠宸濄€俓n椋炴祦鐩翠笅涓夊崈灏猴紝鐤戞槸閾舵渤钀戒節澶┿€? },
+            { name: '姹熼洩 - 鏌冲畻鍏?, content: '鍗冨北楦熼缁濓紝涓囧緞浜鸿釜鐏€俓n瀛よ垷钃戠瑺缈侊紝鐙挀瀵掓睙闆€? },
+            { name: '娓稿瓙鍚?- 瀛熼儕', content: '鎱堟瘝鎵嬩腑绾匡紝娓稿瓙韬笂琛ｃ€俓n涓磋瀵嗗瘑缂濓紝鎰忔亹杩熻繜褰掋€俓n璋佽█瀵歌崏蹇冿紝鎶ュ緱涓夋槬鏅栥€? }
+        ]
+    },
+    idioms: {
+        name: '甯哥敤鎴愯',
+        items: [
+            { name: '瀛︿範绫绘垚璇?, content: '鍕ゅ鑻︾粌 瀛︿互鑷寸敤 娓╂晠鐭ユ柊 涓句竴鍙嶄笁 涓嶈€讳笅闂?瀛滃瓬涓嶅€?瀛︽棤姝㈠ 鍗氬澶氭墠' },
+            { name: '鍝佸痉绫绘垚璇?, content: '璇氬疄瀹堜俊 鍔╀汉涓轰箰 灏婅€佺埍骞?鎷鹃噾涓嶆槯 瑙佷箟鍕囦负 鑸嶅繁涓轰汉 鐭ラ敊灏辨敼 鑷己涓嶆伅' },
+            { name: '鍔ㄧ墿绫绘垚璇?, content: '鐢婚緳鐐圭潧 瀵圭墰寮圭惔 椹埌鎴愬姛 铏庡ご铔囧熬 瀹堟牚寰呭厰 浜＄緤琛ョ墷 鐙愬亣铏庡▉ 浜曞簳涔嬭洐' },
+            { name: '鏁板瓧绫绘垚璇?, content: '涓€蹇冧竴鎰?涓夊績浜屾剰 鍥涢潰鍏柟 浜旈鍏壊 涓冧笂鍏笅 涔濈墰涓€姣?鍗佸叏鍗佺編 鐧惧彂鐧句腑' }
+        ]
+    },
+    strokes: {
+        name: '绗旈『缁冧範',
+        items: [
+            { name: '妯紙涓€锛?, content: '涓€ 浜?涓?鍗?鐜?宸?鍦?骞?寮€ 澶? },
+            { name: '绔栵紙涓級', content: '鍗?涓?宸?涓?涓?涓?鍗?鏈?鏈?鏉? },
+            { name: '鎾囷紙涓匡級', content: '浜?鍏?鍏?澶?澶?澶?澶?鐢?鍗?鍗? },
+            { name: '鎹猴紙銍忥級', content: '浜?澶?澶?澶?澶?澶?澶?璧?瓒?涔? },
+            { name: '鐐癸紙涓讹級', content: '鍏?鏂?涓?鐜?绔?鏂?鐏?涓?澶?涔? },
+            { name: '妯姌锛堛嚂锛?, content: '鍙?鏃?鐩?鐢?鍥?鐧?鐧?鍥?鍥?鍥? },
+            { name: '绔栨姌锛堛嚄锛?, content: '灞?鍑?鐢?鍑?鍑?骞?宸?鍖?鍖?鍖? },
+            { name: '鎾囨姌锛堛嚋锛?, content: '涔?鍏?鍘?浜?浼?鑳?鍙?鍙?绉?鑲? },
+            { name: '妯挬锛堛嚃锛?, content: '涔?鍗?鍐?瀛?瀛?瀹?瀹?瀹?瀹?瀹? },
+            { name: '绔栭挬锛堜簠锛?, content: '灏?姘?鏈?涓?鏉?涔?姹?閲?褰?姘? },
+            { name: '鏂滈挬锛堛噦锛?, content: '鎴?鎴?鎵?鎴?鎴?寮?璇?璇?浠?浼? },
+            { name: '寮挬锛堛噥锛?, content: '浜?瀛?瀛?瀛?鎵?鎵?涔?涔?涔?鐙? }
+        ]
+    }
+};
+
+// 搴旂敤鐘舵€?
+const state = {
+    words: [],          // 瑙ｆ瀽鍚庣殑璇嶇粍鏁扮粍
+    chars: [],          // 鎵€鏈夊瓧绗﹀強鍏剁姸鎬?{ char, pinyin, mode, wordIndex }
+    borderColor: '#cccccc',
+    title: '姹夊瓧缁冧範',
+    ending: '鍔犳补锛佹瘡澶╄繘姝ヤ竴鐐圭偣',
+    currentFont: 'LXGW WenKai GB',  // 褰撳墠瀛椾綋
+    charSize: 100,      // 瀛楃澶у皬鐧惧垎姣?
+    gridType: 'mi',     // 鏍煎瓙绫诲瀷: mi(绫冲瓧鏍?, tian(鐢板瓧鏍?, kou(鍙ｅ瓧鏍?
+    charOpacity: 100,   // 瀛楃鐏板害/閫忔槑搴︾櫨鍒嗘瘮
+    showPinyin: true,   // 鏄惁鏄剧ず鎷奸煶鏍?
+    gridSizeMm: 18,     // 鏍煎瓙澶у皬姣背
+    showName: true,     // 鏄剧ず濮撳悕鏍?
+    showClass: false,   // 鏄剧ず鐝骇鏍?
+    showDate: true,     // 鏄剧ず鏃ユ湡鏍?
+    showRating: false,  // 鏄剧ず璇勫垎鍖?
+    traceMode: false,   // 鎻忕孩妯″紡
+    traceCount: 4,      // 姣忓瓧閲嶅娆℃暟
+    strokeMode: false,  // 绗旈『妯″紡
+    strokeData: {}      // 姹夊瓧绗旂敾鏁版嵁缂撳瓨
+};
+
+// 甯冨眬璁剧疆锛堝彲鍔ㄦ€佽皟鏁达級
+const LAYOUT = {
+    CHARS_PER_ROW: 10,  // 姣忚瀛楁暟
+    MAX_ROWS: 9         // 姣忛〉琛屾暟锛堟牴鎹牸瀛愬ぇ灏忓姩鎬佽绠楋級
+};
+
+// A4绾稿紶灏哄锛堟绫筹級
+const A4 = {
+    WIDTH: 210,
+    HEIGHT: 297,
+    MARGIN_TOP: 25,     // 椤堕儴杈硅窛锛堟爣棰樺尯鍩燂級
+    MARGIN_BOTTOM: 25,  // 搴曢儴杈硅窛锛堥〉鐮?璇勫垎鍖哄煙锛?
+    CONTENT_HEIGHT: 235 // 鍙敤鍐呭楂樺害 = 297 - 25 - 25 - 12(淇℃伅鏍?浣欓噺)
+};
+
+// DOM 鍏冪礌寮曠敤
+const elements = {};
+
+// 鍒濆鍖?
+document.addEventListener('DOMContentLoaded', () => {
+    initElements();
+    loadSettings(); // 鍔犺浇淇濆瓨鐨勮缃?
+    bindEvents();
+    initGridTypeButtons();
+    initOpacityControls();
+    initLayoutControls();
+    initSaveControls();
+    initPresetControls();
+    checkDefaultFont(); // 妫€娴嬮粯璁ゅ瓧浣撴槸鍚﹀彲鐢?
+    updatePreview();
+});
+
+// 妫€娴嬮粯璁ゅ瓧浣撴槸鍚﹀彲鐢?
+function checkDefaultFont() {
+    const testFont = 'LXGW WenKai GB';
+    if (state.currentFont === testFont) {
+        // 浣跨敤 Canvas 妫€娴嬪瓧浣撴槸鍚﹀彲鐢?
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const testText = '瀛?;
+
+        // 鐢ㄩ粯璁ゅ瓧浣撴祴閲?
+        ctx.font = '72px sans-serif';
+        const defaultWidth = ctx.measureText(testText).width;
+
+        // 鐢ㄧ洰鏍囧瓧浣撴祴閲?
+        ctx.font = `72px "${testFont}", sans-serif`;
+        const testWidth = ctx.measureText(testText).width;
+
+        // 濡傛灉瀹藉害鐩稿悓锛岃鏄庡瓧浣撴湭鍔犺浇
+        if (Math.abs(defaultWidth - testWidth) < 1) {
+            // 鏄剧ず鎻愮ず
+            setTimeout(() => {
+                if (confirm('妫€娴嬪埌鏈満鏈畨瑁呫€岄湠楣滄枃妤?GB銆嶅瓧浣撱€俓n\n鎺ㄨ崘涓嬭浇瀹夎姝ゅ厤璐瑰晢鐢ㄥ瓧浣撲互鑾峰緱鏈€浣虫樉绀烘晥鏋溿€俓n\n鐐瑰嚮"纭畾"鍓嶅線涓嬭浇椤甸潰锛屾垨鐐瑰嚮"鍙栨秷"缁х画浣跨敤鍏朵粬瀛椾綋銆?)) {
+                    window.open('https://github.com/lxgw/LxgwWenKai/releases', '_blank');
+                }
+            }, 500);
+        }
+    }
+}
+
+// 棰勭疆鍐呭鎺т欢鍒濆鍖?
+function initPresetControls() {
+    const categorySelect = document.getElementById('presetCategory');
+    const contentSelect = document.getElementById('presetContent');
+    const replaceBtn = document.getElementById('replacePreset');
+    const appendBtn = document.getElementById('appendPreset');
+
+    // 鍒嗙被閫夋嫨鍙樺寲鏃讹紝鏇存柊鍐呭鍒楄〃
+    categorySelect.addEventListener('change', () => {
+        const category = categorySelect.value;
+        contentSelect.innerHTML = '';
+
+        if (category && PRESETS[category]) {
+            const preset = PRESETS[category];
+            contentSelect.disabled = false;
+            replaceBtn.disabled = false;
+            appendBtn.disabled = false;
+
+            preset.items.forEach((item, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = item.name;
+                contentSelect.appendChild(option);
+            });
+        } else {
+            contentSelect.innerHTML = '<option value="">璇峰厛閫夋嫨鍒嗙被...</option>';
+            contentSelect.disabled = true;
+            replaceBtn.disabled = true;
+            appendBtn.disabled = true;
+        }
+    });
+
+    // 鏇挎崲鎸夐挳鐐瑰嚮锛堟竻闄ゅ悗鎻掑叆锛?
+    replaceBtn.addEventListener('click', () => {
+        const category = categorySelect.value;
+        const contentIndex = contentSelect.value;
+
+        if (category && PRESETS[category] && contentIndex !== '') {
+            const content = PRESETS[category].items[contentIndex].content;
+            elements.textInput.value = content;
+            parseText(content);
+            updatePreview();
+        }
+    });
+
+    // 杩藉姞鎸夐挳鐐瑰嚮锛堝湪鐜版湁鍐呭鍚庢坊鍔狅級
+    appendBtn.addEventListener('click', () => {
+        const category = categorySelect.value;
+        const contentIndex = contentSelect.value;
+
+        if (category && PRESETS[category] && contentIndex !== '') {
+            const content = PRESETS[category].items[contentIndex].content;
+            const existing = elements.textInput.value;
+            // 濡傛灉鐜版湁鍐呭涓嶄负绌猴紝娣诲姞鎹㈣鍒嗛殧
+            const newContent = existing ? existing + '\n' + content : content;
+            elements.textInput.value = newContent;
+            parseText(newContent);
+            updatePreview();
+        }
+    });
+}
+
+// 淇濆瓨璁剧疆鍒?localStorage
+function saveSettings() {
+    // 淇濆瓨姣忎釜瀛楃鐨勬樉绀烘ā寮?
+    const charModes = state.chars.map(c => c.mode);
+
+    const settings = {
+        text: elements.textInput.value,
+        borderColor: state.borderColor,
+        title: elements.titleInput.value,
+        ending: elements.endingInput.value,
+        font: state.currentFont,
+        charSize: state.charSize,
+        gridType: state.gridType,
+        charOpacity: state.charOpacity,
+        showPinyin: state.showPinyin,
+        gridSizeMm: state.gridSizeMm,
+        charsPerRow: LAYOUT.CHARS_PER_ROW,
+        charModes: charModes  // 淇濆瓨姣忎釜瀛楃鐨勬樉绀烘ā寮?
+    };
+
+    localStorage.setItem('copybook_settings', JSON.stringify(settings));
+
+    const hint = document.getElementById('saveHint');
+    hint.textContent = '鉁?璁剧疆宸蹭繚瀛?;
+    setTimeout(() => { hint.textContent = ''; }, 2000);
+}
+
+// 浠?localStorage 鍔犺浇璁剧疆
+function loadSettings() {
+    const saved = localStorage.getItem('copybook_settings');
+    if (!saved) return;
+
+    try {
+        const settings = JSON.parse(saved);
+
+        // 鎭㈠鏂囨湰杈撳叆
+        if (settings.text) elements.textInput.value = settings.text;
+        if (settings.title) elements.titleInput.value = settings.title;
+        if (settings.ending) elements.endingInput.value = settings.ending;
+
+        // 鎭㈠鐘舵€?
+        if (settings.borderColor) state.borderColor = settings.borderColor;
+        if (settings.font) state.currentFont = settings.font;
+        if (settings.charSize) state.charSize = settings.charSize;
+        if (settings.gridType) state.gridType = settings.gridType;
+        if (settings.charOpacity) state.charOpacity = settings.charOpacity;
+        if (settings.showPinyin !== undefined) state.showPinyin = settings.showPinyin;
+        if (settings.gridSizeMm) state.gridSizeMm = settings.gridSizeMm;
+        if (settings.charsPerRow) LAYOUT.CHARS_PER_ROW = settings.charsPerRow;
+
+        // 鏇存柊UI鎺т欢
+        if (settings.borderColor) {
+            elements.borderColor.value = settings.borderColor;
+            elements.colorValue.textContent = settings.borderColor;
+        }
+        if (settings.font) elements.fontSelect.value = settings.font;
+        if (settings.charSize) {
+            document.getElementById('charSizeSlider').value = settings.charSize;
+            document.getElementById('charSizeValue').textContent = settings.charSize + '%';
+        }
+        if (settings.charOpacity) {
+            document.getElementById('charOpacitySlider').value = settings.charOpacity;
+            document.getElementById('charOpacityValue').textContent = settings.charOpacity + '%';
+        }
+        if (settings.showPinyin !== undefined) {
+            document.getElementById('showPinyin').checked = settings.showPinyin;
+        }
+
+        // 瑙ｆ瀽鏂囨湰
+        parseText(elements.textInput.value);
+        state.title = settings.title || state.title;
+        state.ending = settings.ending || state.ending;
+
+        // 鎭㈠姣忎釜瀛楃鐨勬樉绀烘ā寮?
+        if (settings.charModes && settings.charModes.length === state.chars.length) {
+            state.chars.forEach((charData, index) => {
+                charData.mode = settings.charModes[index];
+            });
+        }
+
+        const hint = document.getElementById('saveHint');
+        hint.textContent = '宸插姞杞戒笂娆′繚瀛樼殑璁剧疆';
+        setTimeout(() => { hint.textContent = ''; }, 2000);
+    } catch (e) {
+        console.error('鍔犺浇璁剧疆澶辫触:', e);
+    }
+}
+
+// 娓呴櫎淇濆瓨鐨勮缃?
+function clearSettings() {
+    localStorage.removeItem('copybook_settings');
+    const hint = document.getElementById('saveHint');
+    hint.textContent = '宸叉竻闄や繚瀛樼殑璁剧疆';
+    hint.style.color = '#e53e3e';
+    setTimeout(() => {
+        hint.textContent = '';
+        hint.style.color = '';
+    }, 2000);
+}
+
+// 鍒濆鍖栦繚瀛樻帶浠?
+function initSaveControls() {
+    document.getElementById('saveSettings').addEventListener('click', saveSettings);
+    document.getElementById('clearSettings').addEventListener('click', clearSettings);
+}
+
+// 鍒濆鍖?DOM 鍏冪礌寮曠敤
+function initElements() {
+    elements.textInput = document.getElementById('textInput');
+    // charList 宸茬Щ闄わ紝浣跨敤棰勮鍖虹偣鍑诲垏鎹㈡ā寮?
+    elements.borderColor = document.getElementById('borderColor');
+    elements.colorValue = document.getElementById('colorValue');
+    elements.titleInput = document.getElementById('titleInput');
+    elements.endingInput = document.getElementById('endingInput');
+    elements.exportPdf = document.getElementById('exportPdf');
+    elements.pagesContainer = document.getElementById('pagesContainer');
+    // 瀛椾綋鐩稿叧
+    elements.fontSelect = document.getElementById('fontSelect');
+    elements.fontUpload = document.getElementById('fontUpload');
+    elements.detectLocalFonts = document.getElementById('detectLocalFonts');
+    elements.fontStatus = document.getElementById('fontStatus');
+}
+
+// 缁戝畾浜嬩欢
+function bindEvents() {
+    // 鏂囧瓧杈撳叆
+    elements.textInput.addEventListener('input', handleTextInput);
+
+    // 杈规棰滆壊
+    elements.borderColor.addEventListener('input', handleColorChange);
+
+    // 棰滆壊棰勮
+    document.querySelectorAll('.color-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const color = btn.dataset.color;
+            elements.borderColor.value = color;
+            handleColorChange({ target: { value: color } });
+        });
+    });
+
+    // 鏍囬
+    elements.titleInput.addEventListener('input', (e) => {
+        state.title = e.target.value;
+        updatePreview();
+    });
+
+    // 缁撴潫璇?
+    elements.endingInput.addEventListener('input', (e) => {
+        state.ending = e.target.value;
+        updatePreview();
+    });
+
+    // 瀵煎嚭 PDF
+    elements.exportPdf.addEventListener('click', exportToPdf);
+
+    // 瀵煎嚭鍥剧墖
+    document.getElementById('exportPng').addEventListener('click', exportToPng);
+
+    // 瀛椾綋閫夋嫨
+    elements.fontSelect.addEventListener('change', handleFontChange);
+
+    // 瀛椾綋涓婁紶
+    elements.fontUpload.addEventListener('change', handleFontUpload);
+
+    // 妫€娴嬫湰鏈哄瓧浣?
+    elements.detectLocalFonts.addEventListener('click', detectLocalFonts);
+
+    // 鎵归噺妯″紡鎸夐挳
+    document.getElementById('setAllNormal').addEventListener('click', () => setAllMode(DisplayMode.NORMAL));
+    document.getElementById('setAllCharOnly').addEventListener('click', () => setAllMode(DisplayMode.CHAR_ONLY));
+    document.getElementById('setAllPinyinOnly').addEventListener('click', () => setAllMode(DisplayMode.PINYIN_ONLY));
+
+    // 瀛楃澶у皬婊戝潡
+    document.getElementById('charSizeSlider').addEventListener('input', handleCharSizeChange);
+    document.getElementById('applySizeBtn').addEventListener('click', applySizeChange);
+
+    // 瀛︾敓淇℃伅鏍忓拰璇勫垎鍖?
+    document.getElementById('showName').addEventListener('change', (e) => {
+        state.showName = e.target.checked;
+        updatePreview();
+    });
+    document.getElementById('showClass').addEventListener('change', (e) => {
+        state.showClass = e.target.checked;
+        updatePreview();
+    });
+    document.getElementById('showDate').addEventListener('change', (e) => {
+        state.showDate = e.target.checked;
+        updatePreview();
+    });
+    document.getElementById('showRating').addEventListener('change', (e) => {
+        state.showRating = e.target.checked;
+        updatePreview();
+    });
+
+    // 鎻忕孩妯″紡
+    document.getElementById('traceMode').addEventListener('change', (e) => {
+        state.traceMode = e.target.checked;
+        document.getElementById('traceOptions').style.display = e.target.checked ? 'flex' : 'none';
+        // 鎻忕孩妯″紡鍜岀瑪椤烘ā寮忎簰鏂?
+        if (e.target.checked && state.strokeMode) {
+            state.strokeMode = false;
+            document.getElementById('strokeMode').checked = false;
+            document.getElementById('strokeHint').style.display = 'none';
+        }
+        updatePreview();
+    });
+    document.getElementById('traceCount').addEventListener('change', (e) => {
+        state.traceCount = parseInt(e.target.value);
+        updatePreview();
+    });
+
+    // 绗旈『妯″紡
+    document.getElementById('strokeMode').addEventListener('change', (e) => {
+        state.strokeMode = e.target.checked;
+        document.getElementById('strokeHint').style.display = e.target.checked ? 'block' : 'none';
+        // 绗旈『妯″紡鍜屾弿绾㈡ā寮忎簰鏂?
+        if (e.target.checked && state.traceMode) {
+            state.traceMode = false;
+            document.getElementById('traceMode').checked = false;
+            document.getElementById('traceOptions').style.display = 'none';
+        }
+        // 濡傛灉寮€鍚瑪椤烘ā寮忥紝鍔犺浇绗旂敾鏁版嵁
+        if (e.target.checked) {
+            loadStrokeData().then(() => updatePreview());
+        } else {
+            updatePreview();
+        }
+    });
+}
+
+// 澶勭悊瀛楃澶у皬鍙樺寲锛堝彧鏇存柊鏄剧ず鍊硷級
+function handleCharSizeChange(e) {
+    state.charSize = parseInt(e.target.value);
+    document.getElementById('charSizeValue').textContent = state.charSize + '%';
+}
+
+// 搴旂敤瀛楃澶у皬锛堥噸鏂版覆鏌撻瑙堬級
+function applySizeChange() {
+    updatePreview();
+}
+
+// 鏍煎瓙绫诲瀷鍒囨崲
+function initGridTypeButtons() {
+    document.querySelectorAll('.grid-type-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // 鏇存柊鎸夐挳鐘舵€?
+            document.querySelectorAll('.grid-type-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+
+            // 鏇存柊鐘舵€佸苟閲嶆柊娓叉煋
+            state.gridType = e.target.dataset.type;
+            updatePreview();
+        });
+    });
+}
+
+// 瀛楃鐏板害鎺у埗鍒濆鍖?
+function initOpacityControls() {
+    // 棰勮鎸夐挳
+    document.querySelectorAll('.opacity-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.opacity-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+
+            const opacity = parseInt(e.target.dataset.opacity);
+            state.charOpacity = opacity;
+            document.getElementById('charOpacitySlider').value = opacity;
+            document.getElementById('charOpacityValue').textContent = opacity + '%';
+            updatePreview();
+        });
+    });
+
+    // 婊戝潡
+    document.getElementById('charOpacitySlider').addEventListener('input', (e) => {
+        state.charOpacity = parseInt(e.target.value);
+        document.getElementById('charOpacityValue').textContent = state.charOpacity + '%';
+        // 鏇存柊棰勮鎸夐挳鐘舵€?
+        document.querySelectorAll('.opacity-btn').forEach(btn => btn.classList.remove('active'));
+    });
+
+    // 搴旂敤鎸夐挳
+    document.getElementById('applyOpacityBtn').addEventListener('click', () => {
+        updatePreview();
+    });
+}
+
+// 甯冨眬鎺у埗鍒濆鍖?
+function initLayoutControls() {
+    // 姣忚瀛楁暟鎸夐挳
+    document.querySelectorAll('.layout-btn[data-cols]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.layout-btn[data-cols]').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            LAYOUT.CHARS_PER_ROW = parseInt(e.target.dataset.cols);
+            updatePreview();
+        });
+    });
+
+    // 鏍煎瓙澶у皬鎸夐挳
+    document.querySelectorAll('.layout-btn[data-size]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // 鑾峰彇鎸夐挳锛堝彲鑳界偣鍑诲湪small鏍囩涓婏級
+            const button = e.target.closest('.layout-btn');
+            document.querySelectorAll('.layout-btn[data-size]').forEach(b => b.classList.remove('active'));
+            button.classList.add('active');
+            state.gridSizeMm = parseInt(button.dataset.size);
+            calculateMaxRows();
+            updatePreview();
+        });
+    });
+
+    // 鏄剧ず鎷奸煶鏍煎閫夋
+    document.getElementById('showPinyin').addEventListener('change', (e) => {
+        state.showPinyin = e.target.checked;
+        calculateMaxRows();
+        updatePreview();
+    });
+
+    // 鍒濆璁＄畻琛屾暟
+    calculateMaxRows();
+}
+
+// 鏍规嵁鏍煎瓙澶у皬璁＄畻鏈€澶ц鏁?
+function calculateMaxRows() {
+    const gridMm = state.gridSizeMm;
+    const pinyinMm = state.showPinyin ? Math.round(gridMm * 0.5) : 0; // 鎷奸煶鏍肩害涓烘牸瀛愰珮搴︾殑50%
+    const rowHeightMm = gridMm + pinyinMm;
+
+    // 璁＄畻鍙绾崇殑琛屾暟
+    LAYOUT.MAX_ROWS = Math.floor(A4.CONTENT_HEIGHT / rowHeightMm);
+}
+
+// 鎵归噺璁剧疆鎵€鏈夊瓧绗︾殑鏄剧ず妯″紡
+function setAllMode(mode) {
+    state.chars.forEach(charData => {
+        if (mode === DisplayMode.NORMAL) {
+            // 鍏ㄩ儴姝ｅ父锛氭仮澶嶆墍鏈夊瓧绗︼紙鍖呮嫭鏍囩偣銆佸瓧姣嶃€佹暟瀛椼€佺┖鏍硷級
+            charData.mode = DisplayMode.NORMAL;
+        } else {
+            // 浠呮眽瀛?浠呮嫾闊筹細鍙慨鏀规眽瀛楋紝涓嶄慨鏀瑰叾浠栫被鍨?
+            if (charData.type === 'char') {
+                charData.mode = mode;
+            }
+        }
+    });
+
+    updatePreview();
+}
+
+// 澶勭悊鏂囧瓧杈撳叆
+function handleTextInput(e) {
+    const text = e.target.value;
+    parseText(text);
+
+    // 濡傛灉寮€鍚瑪椤烘ā寮忥紝寮傛鍔犺浇绗旂敾鏁版嵁
+    if (state.strokeMode) {
+        loadStrokeData().then(() => updatePreview());
+    } else {
+        updatePreview();
+    }
+}
+
+// 寮傛鍔犺浇姹夊瓧绗旂敾鏁版嵁
+async function loadStrokeData() {
+    const chineseChars = state.chars
+        .filter(c => c.type === 'char' && !state.strokeData[c.char])
+        .map(c => c.char);
+
+    // 鍘婚噸
+    const uniqueChars = [...new Set(chineseChars)];
+
+    // 骞惰鍔犺浇鎵€鏈夋眽瀛楃殑绗旂敾鏁版嵁
+    const promises = uniqueChars.map(async (char) => {
+        try {
+            const data = await HanziWriter.loadCharacterData(char);
+            state.strokeData[char] = data.strokes.length;
+            // 鏇存柊宸茶В鏋愮殑瀛楃鐨勭瑪鐢绘暟
+            state.chars.forEach(c => {
+                if (c.char === char) {
+                    c.strokeCount = data.strokes.length;
+                }
+            });
+        } catch (e) {
+            console.warn(`鏃犳硶鍔犺浇 ${char} 鐨勭瑪鐢绘暟鎹甡);
+            state.strokeData[char] = 8; // 榛樿鍊?
+        }
+    });
+
+    await Promise.all(promises);
+}
+
+// 瑙ｆ瀽鏂囧瓧杈撳叆锛堟墍鏈夊瓧绗﹀潎鍙樉绀猴紝鏀寔鎹㈣锛?
+function parseText(text) {
+    state.words = [];
+    state.chars = [];
+
+    // 瀹氫箟鎵€鏈夋爣鐐圭鍙峰拰鐗规畩瀛楃锛堜腑鑻辨枃锛?
+    const punctuationRegex = /[锛屻€傦紒锛熴€侊紱锛?"''锛堬級銆愩€戙€娿€嬧€︹€斅?.!?;:"'()\[\]<>~锝濦#$%^&*_+=|\\\/\-]/;
+
+    let wordIndex = 0;
+
+    let charIndex = 0;
+
+    for (const char of text) {
+        if (char === '\n' || char === '\r') {
+            // 鎹㈣绗︼細娣诲姞鎹㈣鏍囪
+            state.chars.push({
+                char: '\n',
+                pinyin: '',
+                mode: DisplayMode.NORMAL,
+                wordIndex,
+                type: 'newline',
+                charIndex: charIndex++
+            });
+            wordIndex++;
+        } else if (/[\u4e00-\u9fa5]/.test(char)) {
+            // 姹夊瓧
+            const pinyin = getPinyin(char);
+            // 鑾峰彇绗旂敾鏁帮紙鍚屾鏂瑰紡锛屼娇鐢ㄧ紦瀛橈級
+            let strokeCount = 0;
+            if (state.strokeData[char]) {
+                strokeCount = state.strokeData[char];
+            } else {
+                // 浣跨敤榛樿鍊硷紝鍚庣画寮傛鍔犺浇鏇存柊
+                strokeCount = 8; // 骞冲潎姹夊瓧绗旂敾鏁颁綔涓洪粯璁ゅ€?
+            }
+            state.chars.push({
+                char,
+                pinyin,
+                mode: DisplayMode.NORMAL,
+                wordIndex,
+                type: 'char',
+                charIndex: charIndex++,
+                strokeCount
+            });
+            wordIndex++;
+        } else if (punctuationRegex.test(char)) {
+            // 鏍囩偣绗﹀彿锛氫綔涓哄崰浣嶆牸鏄剧ず
+            state.chars.push({
+                char,
+                pinyin: '',
+                mode: DisplayMode.NORMAL,
+                wordIndex,
+                type: 'punctuation',
+                charIndex: charIndex++
+            });
+            wordIndex++;
+        } else if (/[ \t]/.test(char)) {
+            // 绌烘牸鎴栧埗琛ㄧ锛氫綔涓虹┖鐧藉崰浣嶆牸锛堜笉鍖呮嫭鎹㈣锛?
+            state.chars.push({
+                char: ' ',
+                pinyin: '',
+                mode: DisplayMode.NORMAL,
+                wordIndex,
+                type: 'space',
+                charIndex: charIndex++
+            });
+            wordIndex++;
+        } else if (/[a-zA-Z]/.test(char)) {
+            // 鑻辨枃瀛楁瘝
+            state.chars.push({
+                char,
+                pinyin: '',
+                mode: DisplayMode.NORMAL,
+                wordIndex,
+                type: 'letter',
+                charIndex: charIndex++
+            });
+            wordIndex++;
+        } else if (/[0-9]/.test(char)) {
+            // 鏁板瓧
+            state.chars.push({
+                char,
+                pinyin: '',
+                mode: DisplayMode.NORMAL,
+                wordIndex,
+                type: 'number',
+                charIndex: charIndex++
+            });
+            wordIndex++;
+        }
+    }
+}
+
+// 鑾峰彇鎷奸煶锛堝甫澹拌皟锛?
+function getPinyin(char) {
+    try {
+        // 浣跨敤 pinyin-pro 搴?
+        if (window.pinyinPro && window.pinyinPro.pinyin) {
+            return window.pinyinPro.pinyin(char, { toneType: 'symbol' });
+        }
+    } catch (e) {
+        console.error('鎷奸煶鑾峰彇澶辫触:', e);
+    }
+    return '';
+}
+
+// 瀛楃鍒楄〃宸茬Щ闄わ紝浣跨敤棰勮鍖虹偣鍑诲垏鎹㈡ā寮?
+
+// 寰幆鍒囨崲鏄剧ず妯″紡
+function cycleMode(index) {
+    const charData = state.chars[index];
+    // 鏍囩偣绗﹀彿銆佸瓧姣嶃€佹暟瀛椼€佺┖鏍煎彧鍦?姝ｅ父 鍜?闅愯棌 涔嬮棿鍒囨崲
+    if (['punctuation', 'letter', 'number', 'space'].includes(charData.type)) {
+        charData.mode = charData.mode === DisplayMode.NORMAL ? DisplayMode.HIDDEN : DisplayMode.NORMAL;
+    } else {
+        // 姹夊瓧鏈?绉嶆ā寮?
+        const modes = [DisplayMode.NORMAL, DisplayMode.CHAR_ONLY, DisplayMode.PINYIN_ONLY, DisplayMode.HIDDEN];
+        const currentIndex = modes.indexOf(charData.mode);
+        const nextIndex = (currentIndex + 1) % modes.length;
+        charData.mode = modes[nextIndex];
+    }
+
+    updatePreview();
+}
+
+// 澶勭悊棰滆壊鍙樺寲
+function handleColorChange(e) {
+    state.borderColor = e.target.value;
+    elements.colorValue.textContent = state.borderColor;
+    updatePreview();
+}
+
+// 鏇存柊棰勮锛堝椤垫敮鎸侊級
+function updatePreview() {
+    const container = elements.pagesContainer;
+    container.innerHTML = '';
+
+    // 鎸夎鎺掑垪瀛楃
+    const allRows = layoutChars();
+
+    // 璁＄畻闇€瑕佺殑椤垫暟
+    const charsPerPage = LAYOUT.MAX_ROWS;
+    const totalPages = Math.max(1, Math.ceil(allRows.length / charsPerPage));
+
+    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        const page = createPage(pageIndex, totalPages, allRows);
+        container.appendChild(page);
+    }
+
+    // 搴旂敤褰撳墠瀛椾綋
+    applyFont(state.currentFont);
+}
+
+// 鍒涘缓鍗曚釜椤甸潰
+function createPage(pageIndex, totalPages, allRows) {
+    const page = document.createElement('div');
+    page.className = 'a4-paper';
+    page.style.setProperty('--grid-border-color', state.borderColor);
+
+    // 鍔ㄦ€佽缃牸瀛愬ぇ灏忥紙mm杞琾x锛?6dpi涓?1mm 鈮?3.78px锛屼絾灞忓箷棰勮闇€瑕侀€傞厤锛?
+    // A4绾稿210mm锛岄瑙堝搴︾害794px锛屾墍浠ユ瘮渚嬬害 794/210 鈮?3.78
+    const pxPerMm = 3.78;
+    const gridSizePx = Math.round(state.gridSizeMm * pxPerMm);
+    const pinyinSizePx = state.showPinyin ? Math.round(gridSizePx * 0.5) : 0;
+    page.style.setProperty('--grid-size', gridSizePx + 'px');
+    page.style.setProperty('--pinyin-height', pinyinSizePx + 'px');
+
+    // 鏍囬锛堝彧鍦ㄧ涓€椤垫樉绀猴級
+    if (pageIndex === 0) {
+        const title = document.createElement('div');
+        title.className = 'paper-title';
+        title.textContent = state.title || '';
+        page.appendChild(title);
+
+        // 瀛︾敓淇℃伅鏍?
+        if (state.showName || state.showClass || state.showDate) {
+            const infoBar = document.createElement('div');
+            infoBar.className = 'student-info-bar';
+
+            if (state.showName) {
+                const nameItem = document.createElement('span');
+                nameItem.className = 'info-item';
+                nameItem.innerHTML = '濮撳悕锛?span class="info-line"></span>';
+                infoBar.appendChild(nameItem);
+            }
+            if (state.showClass) {
+                const classItem = document.createElement('span');
+                classItem.className = 'info-item';
+                classItem.innerHTML = '鐝骇锛?span class="info-line"></span>';
+                infoBar.appendChild(classItem);
+            }
+            if (state.showDate) {
+                const dateItem = document.createElement('span');
+                dateItem.className = 'info-item';
+                dateItem.innerHTML = '鏃ユ湡锛?span class="info-line"></span>';
+                infoBar.appendChild(dateItem);
+            }
+
+            page.appendChild(infoBar);
+        }
+    }
+
+    // 鍐呭鍖?
+    const content = document.createElement('div');
+    content.className = 'copybook-content';
+
+    // 璁＄畻褰撳墠椤电殑琛岃寖鍥?
+    const startRow = pageIndex * LAYOUT.MAX_ROWS;
+    const endRow = Math.min(startRow + LAYOUT.MAX_ROWS, allRows.length);
+    const pageRows = allRows.slice(startRow, endRow);
+
+    // 璁＄畻褰撳墠椤电殑璧峰鍗曞厓鏍肩储寮?
+    let cellIndex = startRow * LAYOUT.CHARS_PER_ROW;
+
+    // 娓叉煋褰撳墠椤电殑琛?
+    pageRows.forEach((row, rowIdx) => {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'copybook-row';
+
+        row.forEach(charData => {
+            const cell = createCharCell(charData, cellIndex);
+            rowDiv.appendChild(cell);
+            cellIndex++;
+        });
+
+        // 濉厖褰撳墠琛屽墿浣欑┖鏍?
+        const remaining = LAYOUT.CHARS_PER_ROW - row.length;
+        for (let i = 0; i < remaining; i++) {
+            const emptyCell = createCharCell(null, cellIndex);
+            rowDiv.appendChild(emptyCell);
+            cellIndex++;
+        }
+
+        content.appendChild(rowDiv);
+    });
+
+    // 濉厖鍓╀綑绌鸿
+    const remainingRows = LAYOUT.MAX_ROWS - pageRows.length;
+    for (let i = 0; i < remainingRows; i++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'copybook-row';
+        for (let j = 0; j < LAYOUT.CHARS_PER_ROW; j++) {
+            const emptyCell = createCharCell(null, cellIndex);
+            rowDiv.appendChild(emptyCell);
+            cellIndex++;
+        }
+        content.appendChild(rowDiv);
+    }
+
+    page.appendChild(content);
+
+    // 缁撴潫璇紙鍙湪鏈€鍚庝竴椤垫樉绀猴級
+    if (pageIndex === totalPages - 1) {
+        const ending = document.createElement('div');
+        ending.className = 'paper-ending';
+        ending.textContent = state.ending || '';
+        page.appendChild(ending);
+    }
+
+    // 璇勫垎鍖猴紙姣忛〉閮芥樉绀猴級
+    if (state.showRating) {
+        const ratingSection = document.createElement('div');
+        ratingSection.className = 'rating-section';
+        ratingSection.innerHTML = `
+            <div class="rating-stars">
+                <span>璇勫垎锛?/span>
+                <span class="rating-star">鈽?/span>
+                <span class="rating-star">鈽?/span>
+                <span class="rating-star">鈽?/span>
+                <span class="rating-star">鈽?/span>
+                <span class="rating-star">鈽?/span>
+            </div>
+            <div class="rating-comment">
+                <span>璇勮锛?/span>
+                <span class="comment-line"></span>
+            </div>
+        `;
+        page.appendChild(ratingSection);
+    }
+
+    // 椤佃剼
+    const footer = document.createElement('div');
+    footer.className = 'paper-footer';
+    footer.innerHTML = `<span>绗?${pageIndex + 1} / ${totalPages} 椤?/span>`;
+    page.appendChild(footer);
+
+    return page;
+}
+
+// 甯冨眬瀛楃锛堝鐞嗚瘝缁勪笉璺ㄨ锛?
+function layoutChars() {
+    const rows = [];
+    let currentRow = [];
+
+    // 鎻忕孩妯″紡锛氭墿灞曞瓧绗﹀垪琛?
+    let expandedChars = state.chars;
+    if (state.traceMode) {
+        expandedChars = [];
+        state.chars.forEach(charData => {
+            if (charData.type === 'char') {
+                // 姹夊瓧锛氶噸澶?traceCount 娆★紝甯?traceIndex
+                for (let i = 0; i < state.traceCount; i++) {
+                    expandedChars.push({
+                        ...charData,
+                        traceIndex: i // 0=鍘熷瓧锛?+=鎻忕孩
+                    });
+                }
+            } else {
+                // 闈炴眽瀛楋細鐩存帴澶嶅埗
+                expandedChars.push({ ...charData, traceIndex: 0 });
+            }
+        });
+    } else if (state.strokeMode) {
+        // 绗旈『妯″紡锛氭牴鎹瑪鐢绘暟鎵╁睍瀛楃锛屾瘡涓瓧鐨勭瑪鐢诲悗琛ョ┖鏍煎～婊¤
+        expandedChars = [];
+        let positionInRow = 0; // 褰撳墠琛屼綅缃?
+
+        state.chars.forEach(charData => {
+            if (charData.type === 'char' && charData.strokeCount > 0) {
+                const strokes = charData.strokeCount;
+
+                // 濡傛灉褰撳墠琛屽墿浣欑┖闂翠笉澶熸斁瀹屾暣鐨勭瑪鐢诲簭鍒楋紝鍏堝～婊″綋鍓嶈
+                if (positionInRow > 0 && positionInRow + strokes > LAYOUT.CHARS_PER_ROW) {
+                    // 濉厖绌烘牸鍒拌鏈?
+                    while (positionInRow < LAYOUT.CHARS_PER_ROW) {
+                        expandedChars.push({ type: 'space', char: ' ', strokeIndex: 0 });
+                        positionInRow++;
+                    }
+                    positionInRow = 0;
+                }
+
+                // 娣诲姞绗旂敾搴忓垪
+                for (let i = 1; i <= strokes; i++) {
+                    expandedChars.push({
+                        ...charData,
+                        strokeIndex: i,
+                        totalStrokes: strokes
+                    });
+                    positionInRow++;
+                    if (positionInRow >= LAYOUT.CHARS_PER_ROW) {
+                        positionInRow = 0;
+                    }
+                }
+
+                // 濡傛灉绗旂敾娌℃湁濉弧琛岋紝琛ョ┖鏍?
+                if (positionInRow > 0) {
+                    while (positionInRow < LAYOUT.CHARS_PER_ROW) {
+                        expandedChars.push({ type: 'space', char: ' ', strokeIndex: 0 });
+                        positionInRow++;
+                    }
+                    positionInRow = 0;
+                }
+            } else if (charData.type === 'newline') {
+                // 鎹㈣绗︼細琛ユ弧褰撳墠琛?
+                if (positionInRow > 0) {
+                    while (positionInRow < LAYOUT.CHARS_PER_ROW) {
+                        expandedChars.push({ type: 'space', char: ' ', strokeIndex: 0 });
+                        positionInRow++;
+                    }
+                    positionInRow = 0;
+                }
+            } else if (charData.type === 'space') {
+                // 绌烘牸鍦ㄧ瑪椤烘ā寮忎笅蹇界暐
+            } else {
+                // 鍏朵粬闈炴眽瀛楀瓧绗︼紙鏍囩偣绛夛級锛氬拷鐣?
+            }
+        });
+    }
+
+    // 绠€鍗曞竷灞€锛氱洿鎺ユ寜椤哄簭鎺掑垪
+    expandedChars.forEach(charData => {
+        if (charData.type === 'newline') {
+            // 鎹㈣锛氱粨鏉熷綋鍓嶈
+            if (currentRow.length > 0) {
+                rows.push(currentRow);
+                currentRow = [];
+            }
+        } else {
+            currentRow.push(charData);
+            if (currentRow.length >= LAYOUT.CHARS_PER_ROW) {
+                rows.push(currentRow);
+                currentRow = [];
+            }
+        }
+    });
+    if (currentRow.length > 0) {
+        rows.push(currentRow);
+    }
+
+    return rows;
+}
+
+// 鍒涘缓瀛楃鍗曞厓鏍?
+function createCharCell(charData, charIndex = -1) {
+    const cell = document.createElement('div');
+    cell.className = 'char-cell';
+
+    // 濡傛灉鏈夊瓧绗︽暟鎹笖鏈夌储寮曪紝娣诲姞鐐瑰嚮浜嬩欢鐢ㄤ簬鍒囨崲妯″紡
+    if (charData && charData.charIndex >= 0) {
+        cell.dataset.charIndex = charData.charIndex;
+        cell.style.cursor = 'pointer';
+        cell.addEventListener('click', () => {
+            cycleMode(charData.charIndex);
+        });
+    }
+
+    // 姣?00涓牸瀛愭坊鍔犺鏁版爣璁帮紙鍩轰簬鍗曞厓鏍间綅缃紝涓嶆槸瀛楃绱㈠紩锛?
+    if (charIndex >= 0) {
+        const position = charIndex + 1; // 杞负1-indexed
+        if (position > 0 && position % 100 === 0) {
+            const counter = document.createElement('span');
+            counter.className = 'cell-counter';
+            counter.textContent = position;
+            cell.appendChild(counter);
+        }
+    }
+
+    // 鎷奸煶鏍煎瓙
+    const pinyinGrid = document.createElement('div');
+    pinyinGrid.className = 'pinyin-grid';
+
+    // 绫冲瓧鏍?
+    const miGrid = document.createElement('div');
+    miGrid.className = 'mi-grid';
+
+    // 鏍规嵁鏍煎瓙绫诲瀷娣诲姞绾挎潯
+    // 绫冲瓧鏍? 鍗佸瓧 + 瀵硅绾?
+    // 鐢板瓧鏍? 鍙湁鍗佸瓧
+    // 鍙ｅ瓧鏍? 鏃犵嚎鏉?
+
+    if (state.gridType === 'mi' || state.gridType === 'tian') {
+        // 鍗佸瓧绾匡紙绫冲瓧鏍煎拰鐢板瓧鏍奸兘鏈夛級
+        const lineH = document.createElement('div');
+        lineH.className = 'grid-line line-horizontal';
+        miGrid.appendChild(lineH);
+
+        const lineV = document.createElement('div');
+        lineV.className = 'grid-line line-vertical';
+        miGrid.appendChild(lineV);
+    }
+
+    if (state.gridType === 'mi') {
+        // 瀵硅绾匡紙鍙湁绫冲瓧鏍兼湁锛?
+        const lineD1 = document.createElement('div');
+        lineD1.className = 'grid-line line-diagonal-1';
+        miGrid.appendChild(lineD1);
+
+        const lineD2 = document.createElement('div');
+        lineD2.className = 'grid-line line-diagonal-2';
+        miGrid.appendChild(lineD2);
+    }
+
+    if (charData && charData.mode !== DisplayMode.HIDDEN) {
+        // 璁＄畻褰撳墠瀛椾綋澶у皬 - 鍩轰簬鏍煎瓙澶у皬鍔ㄦ€佽绠?
+        const pxPerMm = 3.78;
+        const gridSizePx = state.gridSizeMm * pxPerMm;
+        const baseFontSize = gridSizePx * 0.85; // 瀛椾綋绾︿负鏍煎瓙鐨?5%
+        const scale = state.charSize / 100;
+        const charFontSize = Math.round(baseFontSize * scale) + 'px';
+        const puncFontSize = Math.round(baseFontSize * 0.7 * scale) + 'px'; // 鏍囩偣灏忎竴浜?
+        // 鎷奸煶瀛椾綋 - 鍩轰簬鎷奸煶鏍煎瓙楂樺害锛堢害涓烘牸瀛愮殑50%锛夌殑70%
+        const pinyinGridHeight = gridSizePx * 0.5;
+        const pinyinFontSize = Math.round(pinyinGridHeight * 0.7) + 'px';
+
+        // 閫忔槑搴︼細鎻忕孩妯″紡涓嬶紝棣栨牸姝ｅ父锛屽悗缁弿绾㈡牸鏇存祬
+        let opacity = state.charOpacity / 100;
+        if (charData.traceIndex && charData.traceIndex > 0) {
+            opacity = 0.25; // 鎻忕孩鏍煎浐瀹氭祬鐏拌壊
+        }
+
+        // 绌烘牸澶勭悊锛氭樉绀轰负绌虹櫧鏍硷紙涓嶆樉绀轰换浣曞唴瀹癸級
+        if (charData.type === 'space') {
+            // 绌烘牸鏍煎瓙淇濇寔绌虹櫧
+        }
+        // 鏍囩偣绗﹀彿澶勭悊
+        else if (charData.type === 'punctuation') {
+            const charText = document.createElement('span');
+            charText.className = 'char-text-display punctuation-text';
+            charText.textContent = charData.char;
+            charText.style.fontSize = puncFontSize;
+            charText.style.opacity = opacity;
+            miGrid.appendChild(charText);
+        }
+        // 瀛楁瘝澶勭悊
+        else if (charData.type === 'letter') {
+            const charText = document.createElement('span');
+            charText.className = 'char-text-display letter-text';
+            charText.textContent = charData.char;
+            charText.style.fontSize = charFontSize;
+            charText.style.opacity = opacity;
+            miGrid.appendChild(charText);
+        }
+        // 鏁板瓧澶勭悊
+        else if (charData.type === 'number') {
+            const charText = document.createElement('span');
+            charText.className = 'char-text-display number-text';
+            charText.textContent = charData.char;
+            charText.style.fontSize = charFontSize;
+            charText.style.opacity = opacity;
+            miGrid.appendChild(charText);
+        } else {
+            // 姹夊瓧澶勭悊
+            // 鏄剧ず鎷奸煶锛氭甯告ā寮?鎴?浠呮嫾闊虫ā寮?
+            if (charData.mode === DisplayMode.NORMAL || charData.mode === DisplayMode.PINYIN_ONLY) {
+                const pinyinText = document.createElement('span');
+                pinyinText.className = 'pinyin-text';
+                pinyinText.textContent = charData.pinyin;
+
+                // 鏍规嵁鎷奸煶闀垮害鍔ㄦ€佽皟鏁村瓧浣撳ぇ灏忥紙闃叉闀挎嫾闊虫孩鍑猴級
+                const pinyinLen = charData.pinyin.length;
+                let adjustedPinyinSize = parseFloat(pinyinFontSize);
+                if (pinyinLen >= 6) {
+                    adjustedPinyinSize *= 0.75; // 6瀛楃浠ヤ笂缂╁皬25%
+                } else if (pinyinLen >= 5) {
+                    adjustedPinyinSize *= 0.85; // 5瀛楃缂╁皬15%
+                }
+                pinyinText.style.fontSize = Math.round(adjustedPinyinSize) + 'px';
+                pinyinText.style.opacity = opacity;
+                // 鏍规嵁鏍煎瓙澶у皬鍔ㄦ€佽皟鏁存嫾闊充綅缃紙鍩虹寰€涓?px锛岃緝澶ф牸瀛愭寜姣斾緥寰€涓婅皟鏁存洿澶氾級
+                const marginAdjust = Math.round((state.gridSizeMm - 12) / 3);
+                pinyinText.style.marginTop = (-5 - marginAdjust) + 'px';
+                pinyinGrid.appendChild(pinyinText);
+            }
+
+            // 鏄剧ず姹夊瓧锛氭甯告ā寮?鎴?浠呮眽瀛楁ā寮?
+            if (charData.mode === DisplayMode.NORMAL || charData.mode === DisplayMode.CHAR_ONLY) {
+                // 绗旈『妯″紡锛氫娇鐢?Hanzi Writer 娓叉煋閮ㄥ垎绗旂敾
+                if (charData.strokeIndex && charData.strokeIndex > 0) {
+                    // 鍒涘缓 Hanzi Writer 瀹瑰櫒
+                    const writerDiv = document.createElement('div');
+                    writerDiv.className = 'hanzi-writer-container';
+                    writerDiv.style.width = charFontSize;
+                    writerDiv.style.height = charFontSize;
+                    writerDiv.style.opacity = opacity;
+                    miGrid.appendChild(writerDiv);
+
+                    // 浣跨敤 Hanzi Writer 娓叉煋
+                    const size = parseInt(charFontSize);
+
+                    // 寮傛鍔犺浇骞舵覆鏌撶瑪鐢?
+                    (async () => {
+                        try {
+                            // 鍔犺浇姹夊瓧鏁版嵁
+                            const charDataResult = await HanziWriter.loadCharacterData(charData.char);
+                            const strokes = charDataResult.strokes;
+
+                            // 鍒涘缓 SVG锛堥渶瑕佸瀭鐩寸炕杞紝鍥犱负Hanzi Writer浣跨敤Y杞村悜涓婄殑鍧愭爣绯伙級
+                            // viewBox璋冩暣锛氬師濮? 0 1024 1024锛屾眽瀛楁暟鎹湁鍐呰竟璺濓紝闇€瑕佸悜涓婄Щ鍔ㄧ害5%浠ヨ瑙夊眳涓?
+                            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                            svg.setAttribute('width', size);
+                            svg.setAttribute('height', size);
+                            svg.setAttribute('viewBox', '0 -120 1024 1024'); // 涓婄Щ120鍗曚綅浣挎眽瀛楄瑙夊眳涓?
+                            svg.style.display = 'block';
+                            svg.style.transform = 'scaleY(-1)'; // 鍨傜洿缈昏浆
+                            // 娓叉煋鍓?strokeIndex 绗?
+                            for (let i = 0; i < Math.min(charData.strokeIndex, strokes.length); i++) {
+                                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                                path.setAttribute('d', strokes[i]);
+                                path.setAttribute('fill', '#333');
+                                path.setAttribute('stroke', 'none');
+                                // 鏈€鍚庝竴绗旂敤绾㈣壊楂樹寒
+                                if (i === charData.strokeIndex - 1) {
+                                    path.setAttribute('fill', '#e53935');
+                                }
+                                svg.appendChild(path);
+                            }
+
+                            writerDiv.appendChild(svg);
+                        } catch (e) {
+                            // 濡傛灉鍔犺浇澶辫触锛屾樉绀烘櫘閫氭枃瀛?
+                            console.warn('绗旂敾鍔犺浇澶辫触:', charData.char, e);
+                            const charText = document.createElement('span');
+                            charText.className = 'char-text-display';
+                            charText.textContent = charData.char;
+                            charText.style.fontSize = charFontSize;
+                            charText.style.opacity = opacity;
+                            writerDiv.appendChild(charText);
+                        }
+                    })();
+
+                    // 鍦ㄦ嫾闊冲尯鏄剧ず绗旂敾搴忓彿
+                    const strokeLabel = document.createElement('span');
+                    strokeLabel.className = 'stroke-label';
+                    strokeLabel.textContent = `${charData.strokeIndex}/${charData.totalStrokes}`;
+                    strokeLabel.style.fontSize = Math.round(parseFloat(pinyinFontSize) * 0.9) + 'px';
+                    pinyinGrid.innerHTML = ''; // 娓呯┖鎷奸煶
+                    pinyinGrid.appendChild(strokeLabel);
+                } else {
+                    // 鏅€氭ā寮忥細鏄剧ず姹夊瓧
+                    const charText = document.createElement('span');
+                    charText.className = 'char-text-display';
+                    charText.textContent = charData.char;
+                    charText.style.fontSize = charFontSize;
+                    charText.style.opacity = opacity;
+                    miGrid.appendChild(charText);
+                }
+            }
+        }
+    }
+
+    // 鏍规嵁璁剧疆鍐冲畾鏄惁鏄剧ず鎷奸煶鏍?
+    if (state.showPinyin) {
+        cell.appendChild(pinyinGrid);
+    }
+    cell.appendChild(miGrid);
+
+    return cell;
+}
+
+// 娓叉煋绌虹櫧椤甸潰
+function renderEmptyPage(content) {
+    for (let i = 0; i < LAYOUT.MAX_ROWS; i++) {
+        const rowDiv = document.createElement('div');
+        rowDiv.className = 'copybook-row';
+        for (let j = 0; j < LAYOUT.CHARS_PER_ROW; j++) {
+            const emptyCell = createCharCell(null);
+            rowDiv.appendChild(emptyCell);
+        }
+        content.appendChild(rowDiv);
+    }
+}
+
+// 瀵煎嚭 PDF锛堝椤垫敮鎸侊級
+async function exportToPdf() {
+    const btn = elements.exportPdf;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="btn-icon">鈴?/span> 鐢熸垚涓?..';
+    btn.disabled = true;
+
+    try {
+        const pages = elements.pagesContainer.querySelectorAll('.a4-paper');
+
+        if (pages.length === 0) {
+            alert('娌℃湁鍐呭鍙鍑?);
+            return;
+        }
+
+        // 鍒涘缓 PDF (A4灏哄)
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const pdfWidth = 210;
+        const pdfHeight = 297;
+
+        // 閬嶅巻姣忎竴椤?
+        for (let i = 0; i < pages.length; i++) {
+            const page = pages[i];
+
+            // 濡傛灉涓嶆槸绗竴椤碉紝娣诲姞鏂伴〉
+            if (i > 0) {
+                pdf.addPage();
+            }
+
+            // 浣跨敤 html2canvas 灏嗛〉闈㈣浆涓哄浘鐗?
+            const canvas = await html2canvas(page, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+
+            // 灏嗗浘鐗囨坊鍔犲埌 PDF锛堝～婊℃暣椤碉級
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        }
+
+        // 涓嬭浇
+        const timestamp = new Date().toISOString().slice(0, 10);
+        pdf.save(`瀛楀笘_${timestamp}.pdf`);
+
+    } catch (error) {
+        console.error('PDF瀵煎嚭澶辫触:', error);
+        alert('PDF瀵煎嚭澶辫触锛岃閲嶈瘯');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// 瀵煎嚭涓篜NG鍥剧墖锛堟瘡椤靛崟鐙鍑猴級
+async function exportToPng() {
+    const btn = document.getElementById('exportPng');
+    const originalText = btn.innerHTML;
+
+    try {
+        btn.innerHTML = '<span class="btn-icon">鈴?/span> 瀵煎嚭涓?..';
+        btn.disabled = true;
+
+        const pages = document.querySelectorAll('.a4-paper');
+        const timestamp = new Date().toISOString().slice(0, 10);
+
+        for (let i = 0; i < pages.length; i++) {
+            const page = pages[i];
+
+            // 浣跨敤 html2canvas 灏嗛〉闈㈣浆涓哄浘鐗?
+            const canvas = await html2canvas(page, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+
+            // 鍒涘缓涓嬭浇閾炬帴
+            const link = document.createElement('a');
+            const pageNum = pages.length > 1 ? `_p${i + 1}` : '';
+            link.download = `瀛楀笘_${timestamp}${pageNum}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+
+            // 澶氶〉鏃跺欢杩熶笅杞介伩鍏嶆祻瑙堝櫒鎷︽埅
+            if (pages.length > 1 && i < pages.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+
+        if (pages.length > 1) {
+            alert(`宸插鍑?${pages.length} 寮犲浘鐗嘸);
+        }
+
+    } catch (error) {
+        console.error('鍥剧墖瀵煎嚭澶辫触:', error);
+        alert('鍥剧墖瀵煎嚭澶辫触锛岃閲嶈瘯');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// ===== 瀛椾綋鍔熻兘 =====
+
+// 澶勭悊瀛椾綋鍒囨崲
+function handleFontChange(e) {
+    const fontName = e.target.value;
+    state.currentFont = fontName;
+    applyFont(fontName);
+    showFontStatus(`宸插垏鎹㈠埌: ${fontName}`, 'success');
+}
+
+// 搴旂敤瀛椾綋鍒伴瑙堝尯
+function applyFont(fontName) {
+    const container = elements.pagesContainer;
+    container.querySelectorAll('.a4-paper').forEach(page => {
+        page.style.setProperty('--char-font', `'${fontName}', serif`);
+    });
+
+    // 鏇存柊鎵€鏈夋眽瀛楀拰鎷奸煶鐨勫瓧浣?
+    document.querySelectorAll('.char-text-display, .pinyin-text').forEach(el => {
+        el.style.fontFamily = `'${fontName}', serif`;
+    });
+}
+
+// 澶勭悊瀛椾綋涓婁紶
+async function handleFontUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const fileName = file.name.replace(/\.[^/.]+$/, ''); // 鍘婚櫎鎵╁睍鍚?
+    const fontName = `Custom-${fileName}`;
+
+    showFontStatus('姝ｅ湪鍔犺浇瀛椾綋...', '');
+
+    try {
+        // 鍒涘缓瀛椾綋 URL
+        const fontUrl = URL.createObjectURL(file);
+
+        // 浣跨敤 FontFace API 鍔犺浇瀛椾綋
+        const font = new FontFace(fontName, `url(${fontUrl})`);
+        await font.load();
+
+        // 娣诲姞鍒版枃妗?
+        document.fonts.add(font);
+
+        // 娣诲姞鍒颁笅鎷夊垪琛?
+        const option = document.createElement('option');
+        option.value = fontName;
+        option.textContent = `馃搧 ${fileName} (宸蹭笂浼?`;
+        elements.fontSelect.appendChild(option);
+
+        // 閫変腑骞跺簲鐢?
+        elements.fontSelect.value = fontName;
+        state.currentFont = fontName;
+        applyFont(fontName);
+
+        showFontStatus(`鉁?宸插姞杞? ${fileName}`, 'success');
+    } catch (error) {
+        console.error('瀛椾綋鍔犺浇澶辫触:', error);
+        showFontStatus('鉁?瀛椾綋鍔犺浇澶辫触', 'error');
+    }
+}
+
+// 妫€娴嬫湰鏈哄瓧浣?
+async function detectLocalFonts() {
+    // 妫€鏌ユ祻瑙堝櫒鏄惁鏀寔 Local Font Access API
+    if (!('queryLocalFonts' in window)) {
+        showFontStatus('鈿?娴忚鍣ㄤ笉鏀寔妫€娴嬫湰鏈哄瓧浣?, 'error');
+        alert('鎮ㄧ殑娴忚鍣ㄤ笉鏀寔 Local Font Access API銆俓n璇蜂娇鐢?Chrome 103+ 鎴?Edge 103+ 鐗堟湰銆?);
+        return;
+    }
+
+    showFontStatus('姝ｅ湪妫€娴嬫湰鏈哄瓧浣?..', '');
+
+    try {
+        // 璇锋眰瀛椾綋璁块棶鏉冮檺
+        const fonts = await window.queryLocalFonts();
+
+        // 绛涢€変腑鏂囧瓧浣擄紙閫氳繃甯歌涓枃瀛椾綋鍚嶇О锛?
+        const chineseFontKeywords = ['瀹?, '榛?, '妤?, '浠?, '闅?, '鍦?, '闆?, '鍗庢枃', 'Hei', 'Song', 'Kai', 'Ming', 'SimSun', 'SimHei', 'Microsoft YaHei', 'PingFang', 'Noto Sans CJK', 'Source Han'];
+
+        const uniqueFonts = new Set();
+        fonts.forEach(font => {
+            const family = font.family;
+            // 妫€鏌ユ槸鍚﹀彲鑳芥槸涓枃瀛椾綋
+            const isChinese = chineseFontKeywords.some(kw => family.includes(kw));
+            if (isChinese && !uniqueFonts.has(family)) {
+                uniqueFonts.add(family);
+            }
+        });
+
+        if (uniqueFonts.size === 0) {
+            showFontStatus('鏈娴嬪埌涓枃瀛椾綋', 'error');
+            return;
+        }
+
+        // 娣诲姞鍒嗛殧绾?
+        const separator = document.createElement('option');
+        separator.disabled = true;
+        separator.textContent = '鈹€鈹€ 鏈満瀛椾綋 鈹€鈹€';
+        elements.fontSelect.appendChild(separator);
+
+        // 娣诲姞鍒颁笅鎷夊垪琛?
+        uniqueFonts.forEach(fontFamily => {
+            const option = document.createElement('option');
+            option.value = fontFamily;
+            option.textContent = `馃捇 ${fontFamily}`;
+            elements.fontSelect.appendChild(option);
+        });
+
+        showFontStatus(`鉁?妫€娴嬪埌 ${uniqueFonts.size} 涓腑鏂囧瓧浣揱, 'success');
+    } catch (error) {
+        console.error('妫€娴嬪瓧浣撳け璐?', error);
+        if (error.name === 'SecurityError') {
+            showFontStatus('鈿?鐢ㄦ埛鎷掔粷浜嗗瓧浣撹闂潈闄?, 'error');
+        } else {
+            showFontStatus('鉁?妫€娴嬪け璐?, 'error');
+        }
+    }
+}
+
+// 鏄剧ず瀛椾綋鐘舵€?
+function showFontStatus(message, type) {
+    elements.fontStatus.textContent = message;
+    elements.fontStatus.className = 'font-load-status ' + type;
+}
+
