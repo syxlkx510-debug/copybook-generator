@@ -154,7 +154,7 @@ const state = {
     borderColor: '#cccccc',
     title: '汉字练习',
     ending: '加油！每天进步一点点',
-    currentFont: 'LXGW WenKai',  // 当前字体
+    currentFont: 'LXGW WenKai GB',  // 当前字体
     charSize: 100,      // 字符大小百分比
     gridType: 'mi',     // 格子类型: mi(米字格), tian(田字格), kou(口字格)
     charOpacity: 100,   // 字符灰度/透明度百分比
@@ -1007,7 +1007,7 @@ function renderCheckInPage() {
     page.className = 'a4-paper checkin-page';
 
     // 应用当前字体
-    page.style.fontFamily = `"${state.currentFont}", "LXGW WenKai", "Ma Shan Zheng", KaiTi, serif`;
+    page.style.fontFamily = `"${state.currentFont}", "LXGW WenKai GB", KaiTi, FangSong, serif`;
 
     const grid = document.createElement('div');
     grid.className = `checkin-grid regions-${state.checkInRegions}`;
