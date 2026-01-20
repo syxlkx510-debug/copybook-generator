@@ -7,6 +7,11 @@
     <title>字帖生成器 - 自定义汉字练习字帖</title>
     <meta name="description" content="免费在线字帖生成器，支持自定义汉字、拼音，米字格练习，可导出PDF打印">
 
+    <!-- 外部CDN字体样式表 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&family=Noto+Serif+SC&display=swap">
+
     <!-- 字体定义 - 支持本地和网络加载 -->
     <style>
         /* 霞鹜文楷 - 先尝试本地，再从CDN加载 */
@@ -222,11 +227,13 @@
                     <label class="section-title">🔤 字体设置</label>
                     <div class="font-select-row">
                         <select id="fontSelect">
-                            <option value="LXGW WenKai GB">霞鹜文楷 GB (默认)</option>
-                            <option value="KaiTi">楷体</option>
-                            <option value="SimSun">宋体</option>
-                            <option value="SimHei">黑体</option>
-                            <option value="FangSong">仿宋</option>
+                            <option value="LXGW WenKai">霞鹜文楷 (推荐)</option>
+                            <option value="Ma Shan Zheng">马上正楷</option>
+                            <option value="Noto Serif SC">思源宋体</option>
+                            <option value="ZCOOL KuaiLe">站酷快乐体</option>
+                            <option value="KaiTi">楷体 (系统)</option>
+                            <option value="SimSun">宋体 (系统)</option>
+                            <option value="SimHei">黑体 (系统)</option>
                         </select>
                     </div>
                     <div class="font-actions">
