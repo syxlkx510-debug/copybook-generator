@@ -20,10 +20,34 @@
             font-display: swap;
         }
 
-        /* 楷体备用 - 系统字体回退 */
+        /* 楷体 - 本地+网络备用 */
         @font-face {
-            font-family: 'KaiTi-Fallback';
-            src: local('KaiTi'), local('楷体'), local('STKaiti'), local('Kaiti SC');
+            font-family: 'KaiTi';
+            src: local('KaiTi'),
+                local('楷体'),
+                local('STKaiti'),
+                local('Kaiti SC'),
+                url('https://cdn.jsdelivr.net/gh/AkagiYui/free-font-webfont@1.0.0/simkai/simkai.woff2') format('woff2');
+            font-display: swap;
+        }
+
+        /* 宋体 - 本地优先（大多数设备都有） */
+        @font-face {
+            font-family: 'SimSun';
+            src: local('SimSun'),
+                local('宋体'),
+                local('STSong'),
+                local('Songti SC');
+            font-display: swap;
+        }
+
+        /* 黑体 */
+        @font-face {
+            font-family: 'SimHei';
+            src: local('SimHei'),
+                local('黑体'),
+                local('STHeiti'),
+                local('Heiti SC');
             font-display: swap;
         }
     </style>
