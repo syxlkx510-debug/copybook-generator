@@ -7,19 +7,12 @@
     <title>字帖生成器 - 自定义汉字练习字帖</title>
     <meta name="description" content="免费在线字帖生成器，支持自定义汉字、拼音，米字格练习，可导出PDF打印">
 
-    <!-- 外部CDN字体样式表 -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/style.css">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+KuaiLe&family=Noto+Serif+SC&display=swap">
-
-    <!-- 字体定义 - 支持本地和网络加载 -->
+    <!-- 字体定义 - 使用本地字体文件 -->
     <style>
-        /* 霞鹜文楷 - 先尝试本地，再从CDN加载 */
+        /* 霞鹜文楷GB - 使用本地文件 */
         @font-face {
             font-family: 'LXGW WenKai GB';
-            src: local('LXGW WenKai GB'),
-                local('LXGWWenKaiGB-Regular'),
-                url('https://cdn.jsdelivr.net/npm/lxgw-wenkai-gb-webfont@1.0.0/lxgwwenkaigb-regular.woff2') format('woff2');
+            src: url('./LXGWWenKaiGB-Regular.ttf') format('truetype');
             font-weight: normal;
             font-style: normal;
             font-display: swap;
